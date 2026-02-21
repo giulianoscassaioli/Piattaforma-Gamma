@@ -159,7 +159,7 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8082/api/firma/da33a389-6676-48b9-9dd6-0610b6ab446e/conferma",
+          "raw": "http://localhost:8082/api/firma/b5ee25cf-2780-4a6f-947b-04042a5a7d1a/conferma",
           "protocol": "http",
           "host": [
             "localhost:8082"
@@ -167,7 +167,7 @@
           "path": [
             "api",
             "firma",
-            "da33a389-6676-48b9-9dd6-0610b6ab446e",
+            "b5ee25cf-2780-4a6f-947b-04042a5a7d1a",
             "conferma"
           ],
           "query": [],
@@ -312,7 +312,7 @@
       }
     },
     {
-      "name": "Leggi Allegati",
+      "name": "Leggi Messaggio",
       "request": {
         "method": "POST",
         "header": [
@@ -328,7 +328,7 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec/724b3365-1466-4a56-8703-6cf92d2ab84a/leggi-allegati",
+          "raw": "http://localhost:8081/api/caselle-pec/0c8f2870-906b-4898-aaf1-b05903c52abe/leggi-messaggi",
           "protocol": "http",
           "host": [
             "localhost:8081"
@@ -336,8 +336,8 @@
           "path": [
             "api",
             "caselle-pec",
-            "724b3365-1466-4a56-8703-6cf92d2ab84a",
-            "leggi-allegati"
+            "0c8f2870-906b-4898-aaf1-b05903c52abe",
+            "leggi-messaggi"
           ],
           "query": [],
           "variable": []

@@ -1,6 +1,6 @@
 package com.gamma.firma.service;
 
-import com.gamma.firma.model.AllegatoFirma;
+import com.gamma.firma.model.AllegatoFirmato;
 import com.gamma.firma.repository.AllegatoFirmaRepository;
 import com.gamma.firma.tenant.TenantContext;
 import com.gamma.firma.tenant.TenantInfo;
@@ -28,7 +28,7 @@ class FirmaServiceTest {
     private AllegatoFirmaRepository allegatoFirmaRepo;
 
     @Mock
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @InjectMocks
     private FirmaService firmaService;
@@ -49,7 +49,7 @@ class FirmaServiceTest {
     @Test
     void conferma_creaAllegatoFirmaEPubblicaEvento() {
         UUID allegatoId = UUID.randomUUID();
-        AllegatoFirma firma = AllegatoFirma.builder()
+        AllegatoFirmato firma = AllegatoFirmato.builder()
                 .id(UUID.randomUUID())
                 .allegatoId(allegatoId)
                 .tenantId("tenant-1")
@@ -60,7 +60,7 @@ class FirmaServiceTest {
         when(allegatoFirmaRepo.findByAllegatoId(allegatoId)).thenReturn(Optional.empty());
         when(allegatoFirmaRepo.save(any())).thenReturn(firma);
 
-        AllegatoFirma risultato = firmaService.conferma(allegatoId);
+        AllegatoFirmato risultato = firmaService.conferma(allegatoId);
 
         assertThat(risultato.getAllegatoId()).isEqualTo(allegatoId);
         assertThat(risultato.getTenantId()).isEqualTo("tenant-1");
@@ -72,7 +72,7 @@ class FirmaServiceTest {
     void conferma_lanceEccezioneSeAllegatoGiaFirmato() {
         UUID allegatoId = UUID.randomUUID();
         when(allegatoFirmaRepo.findByAllegatoId(allegatoId))
-                .thenReturn(Optional.of(AllegatoFirma.builder().build()));
+                .thenReturn(Optional.of(AllegatoFirmato.builder().build()));
 
         assertThatThrownBy(() -> firmaService.conferma(allegatoId))
                 .isInstanceOf(IllegalStateException.class)

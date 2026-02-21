@@ -86,13 +86,13 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 ### pec-service — `http://localhost:8081`
 
-| Metodo | Path                                  | Descrizione                                                    |
-|--------|---------------------------------------|----------------------------------------------------------------|
-| GET    | `/api/caselle-pec`                    | Lista caselle con stato (user: proprie, admin: tutto il tenant) |
-| POST   | `/api/caselle-pec`                    | Registra una casella PEC                                       |
-| DELETE | `/api/caselle-pec/{id}`               | Elimina casella (cancella anche i suoi allegati)               |
-| POST   | `/api/caselle-pec/{id}/leggi-allegati`| Importa allegati dai messaggi mock → ritorna lista con UUID    |
-| GET    | `/api/caselle-pec/allegati/firmati`   | Allegati firmati (user: propri, admin: tutto il tenant)        |
+| Metodo | Path                                   | Descrizione                                                    |
+|--------|----------------------------------------|----------------------------------------------------------------|
+| GET    | `/api/caselle-pec`                     | Lista caselle con stato (user: proprie, admin: tutto il tenant) |
+| POST   | `/api/caselle-pec`                     | Registra una casella PEC                                       |
+| DELETE | `/api/caselle-pec/{id}`                | Elimina casella (cancella anche i suoi allegati)               |
+| POST   | `/api/caselle-pec/{id}/leggi-messaggi` | Importa allegati dai messaggi mock → ritorna lista con UUID    |
+| GET    | `/api/caselle-pec/allegati/firmati`    | Allegati firmati (user: propri, admin: tutto il tenant)        |
 
 ### firma-service — `http://localhost:8082`
 
@@ -114,7 +114,7 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 ## Flusso completo
 
 ```
-1. POST /api/caselle-pec/{id}/leggi-allegati   (pec-service)
+1. POST /api/caselle-pec/{id}/leggi-messaggi   (pec-service)
         │  legge messaggi mock dalla casella PEC
         │  salva allegati nel DB (firmato=false)
         └→ ritorna: [{ id, filename }, ...]
@@ -145,11 +145,11 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
-| Tabella         | Servizio      | Descrizione                                                         |
-|-----------------|---------------|---------------------------------------------------------------------|
-| `casella_pec`   | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)              |
-| `allegato`      | pec-service   | Allegati estratti dai messaggi (tenant_id, user_id, firmato)        |
-| `allegato_firma`| firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at) |
+| Tabella            | Servizio      | Descrizione                                                         |
+|--------------------|---------------|---------------------------------------------------------------------|
+| `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)              |
+| `allegato`         | pec-service   | Allegati estratti dai messaggi (tenant_id, user_id, firmato)        |
+| `allegato_firmato` | firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at) |
 
 > Eliminando una casella vengono eliminati automaticamente anche tutti i suoi allegati (cascade).
 

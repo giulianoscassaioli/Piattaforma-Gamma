@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "allegato_firma")
+@Table(name = "allegato_firmato")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class AllegatoFirma {
+public class AllegatoFirmato {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
