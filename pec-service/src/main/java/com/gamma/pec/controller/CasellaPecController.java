@@ -4,9 +4,7 @@ import com.gamma.pec.dto.AllegatoDto;
 import com.gamma.pec.dto.CasellaPecRequest;
 import com.gamma.pec.dto.CasellaDto;
 import com.gamma.pec.model.CasellaPec;
-import com.gamma.pec.repository.AllegatoRepository;
 import com.gamma.pec.service.CasellaPecService;
-import com.gamma.pec.tenant.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,9 +20,6 @@ public class CasellaPecController {
 
     @Autowired
     private CasellaPecService casellaPecService;
-
-    @Autowired
-    private AllegatoRepository allegatoRepo;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('user', 'admin')")
@@ -63,11 +58,9 @@ public class CasellaPecController {
     @GetMapping("/allegati/firmati")
     @PreAuthorize("hasAnyRole('user', 'admin')")
     public List<AllegatoDto> allegatiFirmati(Authentication authentication) {
-        String tenantId = TenantContext.getTenantId();
-        var allegati = isAdmin(authentication)
-                ? allegatoRepo.findByTenantIdAndFirmato(tenantId, true)
-                : allegatoRepo.findByTenantIdAndUserIdAndFirmato(tenantId, TenantContext.get().getUserId(), true);
-        return allegati.stream().map(a -> new AllegatoDto(a.getId(), a.getFilename())).toList();
+        return casellaPecService.allegatiFirmati(isAdmin(authentication)).stream()
+                .map(a -> new AllegatoDto(a.getId(), a.getFilename()))
+                .toList();
     }
 
     private boolean isAdmin(Authentication authentication) {
