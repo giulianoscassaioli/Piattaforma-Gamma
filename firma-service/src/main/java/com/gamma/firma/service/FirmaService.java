@@ -6,6 +6,7 @@ import com.gamma.firma.model.AllegatoFirmato;
 import com.gamma.firma.repository.AllegatoFirmaRepository;
 import com.gamma.firma.tenant.TenantContext;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -33,27 +34,30 @@ public class FirmaService {
     public AllegatoFirmato conferma(UUID allegatoId) {
         String tenantId = TenantContext.getTenantId();
         String userId = TenantContext.get().getUserId();
-
         if (allegatoFirmaRepo.findByAllegatoId(allegatoId).isPresent()) {
             throw new IllegalStateException("Allegato già firmato: " + allegatoId);
         }
+        AllegatoFirmato firma = salvaFirma(allegatoId, tenantId, userId);
+        log.info("Allegato {} firmato da {} tenant {}", allegatoId, userId, tenantId);
+        inviaEvento(allegatoId, tenantId, userId);
+        return firma;
+    }
 
-        AllegatoFirmato firma = allegatoFirmaRepo.save(AllegatoFirmato.builder()
+    private @NonNull AllegatoFirmato salvaFirma(UUID allegatoId, String tenantId, String userId) {
+        return allegatoFirmaRepo.save(AllegatoFirmato.builder()
                 .allegatoId(allegatoId)
                 .tenantId(tenantId)
                 .userId(userId)
                 .firmatoAt(LocalDateTime.now())
                 .build());
+    }
 
-        log.info("Allegato {} firmato da {} tenant {}", allegatoId, userId, tenantId);
-
+    private void inviaEvento(UUID allegatoId, String tenantId, String userId) {
         try {
             String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, tenantId, userId));
             kafkaTemplate.send(TOPIC_ALLEGATO_FIRMATO, tenantId, payload);
         } catch (Exception e) {
             log.error("Errore pubblicazione evento Kafka per allegato {}", allegatoId, e);
         }
-
-        return firma;
     }
 }

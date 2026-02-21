@@ -2,6 +2,7 @@ package com.gamma.pec.service;
 
 import com.gamma.pec.dto.CasellaDto;
 import com.gamma.pec.mock.AllegatoMock;
+import com.gamma.pec.mock.MockConservazioneApi;
 import com.gamma.pec.mock.MessaggioPecMock;
 import com.gamma.pec.mock.MockPecApi;
 import com.gamma.pec.model.Allegato;
@@ -31,6 +32,9 @@ public class CasellaPecService {
 
     @Autowired
     private MockPecApi mockPecApi;
+
+    @Autowired
+    private MockConservazioneApi mockConservazioneApi;
 
     public List<CasellaDto> listaCaselle(String filtroIndirizzo, String mittente, String oggetto, boolean isAdmin) {
         String userId = TenantContext.get().getUserId();
@@ -123,6 +127,28 @@ public class CasellaPecService {
         boolean firmato = letto && importato.isFirmato();
         UUID allegatoId = letto ? importato.getId() : null;
         return new CasellaDto.AllegatoDto(allegatoId, a.getFilename(), letto, firmato);
+    }
+
+    @Transactional
+    public void gestisciAllegatoFirmato(UUID allegatoId, String tenantId, String userId) {
+        allegatoRepo.findById(allegatoId).ifPresent(allegato -> {
+            if (!allegato.getTenantId().equals(tenantId) || !allegato.getUserId().equals(userId)) {
+                log.warn("Allegato {} non appartiene a tenant {} user {}, ignorato", allegatoId, tenantId, userId);
+                return;
+            }
+            allegato.setFirmato(true);
+            allegatoRepo.save(allegato);
+            mockConservazioneApi.conservaAllegato(tenantId, allegato.getFilename());
+            log.info("Allegato {} inviato in conservazione", allegato.getFilename());
+        });
+    }
+
+    public List<Allegato> allegatiFirmati(boolean isAdmin) {
+        String tenantId = TenantContext.getTenantId();
+        String userId = TenantContext.get().getUserId();
+        return isAdmin
+                ? allegatoRepo.findByTenantIdAndFirmato(tenantId, true)
+                : allegatoRepo.findByTenantIdAndUserIdAndFirmato(tenantId, userId, true);
     }
 
     private List<CasellaPec> leggiCaselleUtente(String filtroIndirizzo, String userId, String tenantId) {
