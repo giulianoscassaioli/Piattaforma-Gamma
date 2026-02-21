@@ -44,7 +44,7 @@ public class CasellaPecController {
         casellaPecService.eliminaCasella(id);
     }
 
-    @PostMapping("/{id}/leggi-messaggi")
+    @PostMapping("/{id}/leggi-allegati")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasAnyRole('user', 'admin')")
     public List<AllegatoDto> leggiMessaggi(@PathVariable UUID id,

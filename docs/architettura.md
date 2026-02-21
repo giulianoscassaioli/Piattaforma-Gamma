@@ -18,7 +18,7 @@ Due microservizi Spring Boot:
 Non si chiamano mai direttamente tra loro, usano Kafka. Il flusso è:
 
 ```
-utente chiama POST /leggi-messaggi (pec-service)
+utente chiama POST /leggi-allegati (pec-service)
   → salva allegati nel DB con firmato=false
 
 utente chiama POST /firma/{id}/conferma (firma-service)

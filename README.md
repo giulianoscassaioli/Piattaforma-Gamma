@@ -91,7 +91,7 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 | GET    | `/api/caselle-pec`                     | Lista caselle con stato (user: proprie, admin: tutto il tenant) |
 | POST   | `/api/caselle-pec`                     | Registra una casella PEC                                       |
 | DELETE | `/api/caselle-pec/{id}`                | Elimina casella (cancella anche i suoi allegati)               |
-| POST   | `/api/caselle-pec/{id}/leggi-messaggi` | Importa allegati dai messaggi mock → ritorna lista con UUID    |
+| POST   | `/api/caselle-pec/{id}/leggi-allegati` | Importa allegati dai messaggi mock → ritorna lista con UUID    |
 | GET    | `/api/caselle-pec/allegati/firmati`    | Allegati firmati (user: propri, admin: tutto il tenant)        |
 
 ### firma-service — `http://localhost:8082`
@@ -114,7 +114,7 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 ## Flusso completo
 
 ```
-1. POST /api/caselle-pec/{id}/leggi-messaggi   (pec-service)
+1. POST /api/caselle-pec/{id}/leggi-allegati   (pec-service)
         │  legge messaggi mock dalla casella PEC
         │  salva allegati nel DB (firmato=false)
         └→ ritorna: [{ id, filename }, ...]
