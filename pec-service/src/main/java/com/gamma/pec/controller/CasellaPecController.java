@@ -49,13 +49,13 @@ public class CasellaPecController {
         casellaPecService.eliminaCasella(id);
     }
 
-    @PostMapping("/{id}/leggi-allegati")
+    @PostMapping("/{id}/leggi-messaggi")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasAnyRole('user', 'admin')")
-    public List<AllegatoDto> leggiAllegati(@PathVariable UUID id,
+    public List<AllegatoDto> leggiMessaggi(@PathVariable UUID id,
                                            @RequestParam(required = false) String mittente,
                                            @RequestParam(required = false) String oggetto) {
-        return casellaPecService.leggiImportaAllegati(id, mittente, oggetto).stream()
+        return casellaPecService.leggiMessaggiImportaAllegati(id, mittente, oggetto).stream()
                 .map(a -> new AllegatoDto(a.getId(), a.getFilename()))
                 .toList();
     }

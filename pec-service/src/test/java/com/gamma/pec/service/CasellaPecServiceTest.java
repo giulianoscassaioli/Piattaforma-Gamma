@@ -65,7 +65,7 @@ class CasellaPecServiceTest {
     }
 
     @Test
-    void leggiImportaAllegati_filtraPerOggetto() {
+    void leggiMessaggiImportaAllegati_filtraPerOggetto() {
         UUID casellaPecId = UUID.randomUUID();
         CasellaPec casella = CasellaPec.builder().id(casellaPecId)
                 .tenantId("tenant-1").indirizzo("mario@pec.it").build();
@@ -79,18 +79,18 @@ class CasellaPecServiceTest {
         ));
         when(allegatoRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Allegato> risultato = casellaPecService.leggiImportaAllegati(casellaPecId, null, "Gennaio");
+        List<Allegato> risultato = casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, "Gennaio");
 
         assertThat(risultato).hasSize(1);
         assertThat(risultato.get(0).getFilename()).contains("fattura_gennaio.pdf");
     }
 
     @Test
-    void leggiImportaAllegati_lanceEccezioneSeNonEsiste() {
+    void leggiMessaggiImportaAllegati_lanceEccezioneSeNonEsiste() {
         UUID casellaPecId = UUID.randomUUID();
         when(casellaPecRepo.findByIdAndTenantId(casellaPecId, "tenant-1")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> casellaPecService.leggiImportaAllegati(casellaPecId, null, null))
+        assertThatThrownBy(() -> casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, null))
                 .isInstanceOf(NoSuchElementException.class);
     }
 }

@@ -84,14 +84,14 @@ class CasellaPecControllerTest {
                 .id(UUID.randomUUID())
                 .filename("fattura.pdf")
                 .build();
-        when(casellaPecService.leggiImportaAllegati(casellaPecId, null, "Fattura"))
+        when(casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, "Fattura"))
                 .thenReturn(List.of(allegato));
 
-        List<AllegatoDto> risultato = controller.leggiAllegati(casellaPecId, null, "Fattura");
+        List<AllegatoDto> risultato = controller.leggiMessaggi(casellaPecId, null, "Fattura");
 
         assertThat(risultato).hasSize(1);
         assertThat(risultato.get(0).filename()).isEqualTo("fattura.pdf");
-        verify(casellaPecService).leggiImportaAllegati(casellaPecId, null, "Fattura");
+        verify(casellaPecService).leggiMessaggiImportaAllegati(casellaPecId, null, "Fattura");
     }
 
     // helper per simulare un'autenticazione utente normale

@@ -1,7 +1,8 @@
 package com.gamma.firma.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gamma.firma.dto.AllegatoFirmatoEvent;
-import com.gamma.firma.model.AllegatoFirma;
+import com.gamma.firma.model.AllegatoFirmato;
 import com.gamma.firma.repository.AllegatoFirmaRepository;
 import com.gamma.firma.tenant.TenantContext;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +21,16 @@ public class FirmaService {
     private static final String TOPIC_ALLEGATO_FIRMATO = "allegato-firmato";
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private AllegatoFirmaRepository allegatoFirmaRepo;
 
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Transactional
-    public AllegatoFirma conferma(UUID allegatoId) {
+    public AllegatoFirmato conferma(UUID allegatoId) {
         String tenantId = TenantContext.getTenantId();
         String userId = TenantContext.get().getUserId();
 
@@ -34,7 +38,7 @@ public class FirmaService {
             throw new IllegalStateException("Allegato già firmato: " + allegatoId);
         }
 
-        AllegatoFirma firma = allegatoFirmaRepo.save(AllegatoFirma.builder()
+        AllegatoFirmato firma = allegatoFirmaRepo.save(AllegatoFirmato.builder()
                 .allegatoId(allegatoId)
                 .tenantId(tenantId)
                 .userId(userId)
@@ -43,8 +47,12 @@ public class FirmaService {
 
         log.info("Allegato {} firmato da {} tenant {}", allegatoId, userId, tenantId);
 
-        kafkaTemplate.send(TOPIC_ALLEGATO_FIRMATO, tenantId,
-                new AllegatoFirmatoEvent(allegatoId, tenantId, userId));
+        try {
+            String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, tenantId, userId));
+            kafkaTemplate.send(TOPIC_ALLEGATO_FIRMATO, tenantId, payload);
+        } catch (Exception e) {
+            log.error("Errore pubblicazione evento Kafka per allegato {}", allegatoId, e);
+        }
 
         return firma;
     }

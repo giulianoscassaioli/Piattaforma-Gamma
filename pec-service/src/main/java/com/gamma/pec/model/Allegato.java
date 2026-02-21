@@ -29,4 +29,7 @@ public class Allegato {
 
     @Column(nullable = false)
     private boolean firmato;
+
+    @Column(nullable = false)
+    private boolean letto;
 }

@@ -1,5 +1,6 @@
 package com.gamma.pec.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gamma.pec.dto.AllegatoFirmatoEvent;
 import com.gamma.pec.mock.MockConservazioneApi;
 import com.gamma.pec.model.Allegato;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -25,11 +28,14 @@ class PecKafkaConsumerTest {
     @Mock
     private MockConservazioneApi mockConservazioneApi;
 
+    @Spy
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private PecKafkaConsumer pecKafkaConsumer;
 
     @Test
-    void handleAllegatoFirmato_marcaFirmatoEConserva() {
+    void handleAllegatoFirmato_marcaFirmatoEConserva() throws Exception {
         UUID allegatoId = UUID.randomUUID();
         Allegato allegato = Allegato.builder()
                 .id(allegatoId)
@@ -42,7 +48,8 @@ class PecKafkaConsumerTest {
         when(allegatoRepo.findById(allegatoId)).thenReturn(Optional.of(allegato));
         when(allegatoRepo.save(any())).thenReturn(allegato);
 
-        pecKafkaConsumer.handleAllegatoFirmato(new AllegatoFirmatoEvent(allegatoId, "tenant-1", "user-1"));
+        String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, "tenant-1", "user-1"));
+        pecKafkaConsumer.handleAllegatoFirmato(payload);
 
         assertThat(allegato.isFirmato()).isTrue();
         verify(allegatoRepo).save(allegato);
@@ -50,7 +57,7 @@ class PecKafkaConsumerTest {
     }
 
     @Test
-    void handleAllegatoFirmato_ignoraSeTenantsNonCorrispondono() {
+    void handleAllegatoFirmato_ignoraSeTenantsNonCorrispondono() throws Exception {
         UUID allegatoId = UUID.randomUUID();
         Allegato allegato = Allegato.builder()
                 .id(allegatoId)
@@ -63,7 +70,8 @@ class PecKafkaConsumerTest {
         when(allegatoRepo.findById(allegatoId)).thenReturn(Optional.of(allegato));
 
         // evento con tenant diverso
-        pecKafkaConsumer.handleAllegatoFirmato(new AllegatoFirmatoEvent(allegatoId, "tenant-ALTRO", "user-1"));
+        String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, "tenant-ALTRO", "user-1"));
+        pecKafkaConsumer.handleAllegatoFirmato(payload);
 
         assertThat(allegato.isFirmato()).isFalse();
         verify(allegatoRepo, never()).save(any());

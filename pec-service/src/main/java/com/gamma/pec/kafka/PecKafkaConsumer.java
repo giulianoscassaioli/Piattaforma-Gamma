@@ -1,5 +1,7 @@
 package com.gamma.pec.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gamma.pec.dto.AllegatoFirmatoEvent;
 import com.gamma.pec.mock.MockConservazioneApi;
 import com.gamma.pec.repository.AllegatoRepository;
@@ -19,9 +21,13 @@ public class PecKafkaConsumer {
     @Autowired
     private MockConservazioneApi mockConservazioneApi;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @KafkaListener(topics = "allegato-firmato", groupId = "pec-eventi")
     @Transactional
-    public void handleAllegatoFirmato(AllegatoFirmatoEvent event) {
+    public void handleAllegatoFirmato(String payload) {
+        AllegatoFirmatoEvent event = convertiPayload(payload);
         log.info("Allegato firmato ricevuto: {} tenant {} user {}", event.getAllegatoId(), event.getTenantId(), event.getUserId());
         try {
             allegatoRepo.findById(event.getAllegatoId()).ifPresent(allegato -> {
@@ -39,5 +45,16 @@ public class PecKafkaConsumer {
         } catch (Exception e) {
             log.error("Errore conservazione allegato {}", event.getAllegatoId(), e);
         }
+    }
+
+    private AllegatoFirmatoEvent convertiPayload(String payload) {
+        AllegatoFirmatoEvent event;
+        try {
+            event = objectMapper.readValue(payload, AllegatoFirmatoEvent.class);
+        } catch (JsonProcessingException e) {
+            log.error("Errore in convertire evento", e);
+            throw new RuntimeException(e);
+        }
+        return event;
     }
 }
