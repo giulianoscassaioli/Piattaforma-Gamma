@@ -2,7 +2,7 @@
 
 POC locale per la gestione del flusso **PEC → Firma Digitale → Conservazione**.
 
-Architettura **event-driven** con Kafka: i microservizi non si chiamano mai direttamente, comunicano solo tramite AllegatoFirmatoEvent.
+Architettura **event-driven** con Kafka tramite AllegatoFirmatoEvent.
 
 Per le scelte architetturali e tecnologiche vedere [docs/architettura.md](docs/architettura.md).
 
@@ -10,7 +10,7 @@ Per le scelte architetturali e tecnologiche vedere [docs/architettura.md](docs/a
 
 ## Prerequisiti
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) avviato
+- Docker
 - Java 25
 - Maven 3.9+
 
@@ -28,12 +28,6 @@ mvn clean install -DskipTests
 
 ```bash
 docker compose up -d
-```
-
-Quando tutti i container sono healthy:
-
-```bash
-docker compose ps
 ```
 
 | Servizio         | URL                   | Note                                 |
@@ -82,7 +76,7 @@ TOKEN=$(curl -s -X POST http://localhost:8080/realms/gamma/protocol/openid-conne
   | jq -r .access_token)
 ```
 
-> Fetcha il token delle chiamate tramite oauth2 di Bruno.
+> Fetcha il token delle chiamate tramite oauth2 di Bruno o Postman
 
 ---
 
@@ -161,7 +155,7 @@ Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
 ---
 
-## Connessione a giu di pgAdmin
+## Connessione a GUI di pgAdmin
 
 1. Vai su http://localhost:5050
 2. Login: `giuliano@email.it` / `admin`
@@ -171,7 +165,7 @@ Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
 ---
 
-## Fermare tutto
+## Fermare app
 
 ```bash
 docker compose down -v
