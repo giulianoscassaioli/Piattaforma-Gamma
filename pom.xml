@@ -25,16 +25,16 @@
 
     <properties>
         <java.version>25</java.version>
-        <loki4j.version>1.5.2</loki4j.version>
+        <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
         <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.github.loki4j</groupId>
-                <artifactId>loki-logback-appender</artifactId>
-                <version>${loki4j.version}</version>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback-encoder.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

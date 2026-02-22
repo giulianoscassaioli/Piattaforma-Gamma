@@ -1,4 +1,4 @@
-package com.gamma.pec.dto;
+package com.gamma.firma.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,8 +9,9 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AllegatoFirmatoEvent {
+public class FirmaRiuscitaEvent {
     private UUID allegatoId;
     private String tenantId;
     private String userId;
+    private String riuscitoAt;
 }

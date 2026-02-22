@@ -9,8 +9,9 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AllegatoFirmatoEvent {
+public class FirmaFallitaEvent {
     private UUID allegatoId;
     private String tenantId;
     private String userId;
+    private String fallitoAt;
 }

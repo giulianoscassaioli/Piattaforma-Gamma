@@ -2,9 +2,7 @@
 
 POC locale per la gestione del flusso **PEC → Firma Digitale → Conservazione**.
 
-Architettura **event-driven** con Kafka tramite AllegatoFirmatoEvent.
-
-Per le scelte architetturali e tecnologiche vedere [docs/architettura.md](docs/architettura.md).
+Architettura **event-driven** con Kafka. Per le scelte architetturali vedere [docs/architettura.md](docs/architettura.md).
 
 ---
 
@@ -30,14 +28,16 @@ mvn clean install -DskipTests
 docker compose up -d
 ```
 
-| Servizio         | URL                   | Note                                 |
-|------------------|-----------------------|--------------------------------------|
-| PostgreSQL       | `localhost:5432`      | DB: `gamma`, User: `admin`           |
-| pgAdmin          | http://localhost:5050 | Login: `giuliano@email.it` / `admin` |
-| Redpanda         | `localhost:9092`      | Broker Kafka-compatible              |
-| Redpanda Console | http://localhost:8083 | UI topic e consumer group            |
-| Keycloak         | http://localhost:8080 | Identity Provider (realm: `gamma`)   |
-| Grafana          | http://localhost:3000 | Dashboard log (Loki)                 |
+| Servizio         | URL                   | Note                                    |
+|------------------|-----------------------|-----------------------------------------|
+| PostgreSQL       | `localhost:5432`      | DB: `gamma`, User: `admin`              |
+| pgAdmin          | http://localhost:5050 | Login: `giuliano@email.it` / `admin`    |
+| Redpanda         | `localhost:9092`      | Broker Kafka-compatible                 |
+| Redpanda Console | http://localhost:8083 | UI topic e consumer group               |
+| Keycloak         | http://localhost:8080 | Identity Provider (realm: `gamma`)      |
+| Elasticsearch    | http://localhost:9200 | Storage e ricerca log                   |
+| Logstash         | `localhost:5044`      | Ingestion log via TCP (JSON)            |
+| Kibana           | http://localhost:5601 | Dashboard log                           |
 
 ### 3. Avvia i microservizi
 
@@ -52,6 +52,32 @@ cd pec-service && mvn spring-boot:run
 # Terminale 2 — firma-service (porta 8082)
 cd firma-service && mvn spring-boot:run
 ```
+
+---
+
+## Visualizzare i log con Kibana
+
+I log di entrambi i servizi vengono inviati automaticamente a Logstash e indicizzati su Elasticsearch. Al primo avvio occorre configurare il Data View su Kibana.
+
+### Configurazione iniziale (una volta sola)
+
+1. Avvia i microservizi e fai almeno una chiamata API per generare i primi log
+2. Apri Kibana su **http://localhost:5601**
+3. Clicca sull'icona del menu hamburger in alto a sinistra
+4. Vai su **Stack Management** → **Data Views**
+5. Clicca **Create data view**
+6. Compila i campi:
+   - **Name:** `logs`
+   - **Index pattern:** `gamma-logs-*`
+   - **Timestamp field:** `@timestamp`
+7. Clicca **Save data view to Kibana**
+
+### Esplorare i log
+
+1. Menu hamburger → **Analytics** → **Discover**
+2. Seleziona il data view **logs** in alto a sinistra
+3. Regola il range temporale in alto a destra (es. **Last 15 minutes**)
+4. I log appaiono in ordine cronologico con tutti i campi JSON espansi
 
 ---
 
@@ -76,7 +102,7 @@ TOKEN=$(curl -s -X POST http://localhost:8080/realms/gamma/protocol/openid-conne
   | jq -r .access_token)
 ```
 
-> Fetcha il token delle chiamate tramite oauth2 di Bruno o Postman
+> In alternativa usa il flow OAuth2 integrato in Bruno o Postman.
 
 ---
 
@@ -86,13 +112,13 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 ### pec-service — `http://localhost:8081`
 
-| Metodo | Path                                   | Descrizione                                                    |
-|--------|----------------------------------------|----------------------------------------------------------------|
-| GET    | `/api/caselle-pec`                     | Lista caselle con stato (user: proprie, admin: tutto il tenant) |
-| POST   | `/api/caselle-pec`                     | Registra una casella PEC                                       |
-| DELETE | `/api/caselle-pec/{id}`                | Elimina casella (cancella anche i suoi allegati)               |
-| POST   | `/api/caselle-pec/{id}/leggi-allegati` | Importa allegati dai messaggi mock → ritorna lista con UUID    |
-| GET    | `/api/caselle-pec/allegati/firmati`    | Allegati firmati (user: propri, admin: tutto il tenant)        |
+| Metodo | Path                                   | Descrizione                                                     |
+|--------|----------------------------------------|-----------------------------------------------------------------|
+| GET    | `/api/caselle-pec`                     | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant) |
+| POST   | `/api/caselle-pec`                     | Registra una casella PEC                                                       |
+| DELETE | `/api/caselle-pec/{id}`                | Elimina casella (cancella anche i suoi allegati)                               |
+| POST   | `/api/caselle-pec/{id}/leggi-allegati` | Importa allegati dai messaggi mock → ritorna `[{id, filename}]`                |
+| GET    | `/api/caselle-pec/allegati/firmati`    | Allegati firmati (user: propri, admin: tutto il tenant)                        |
 
 ### firma-service — `http://localhost:8082`
 
@@ -104,10 +130,10 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 ## Ruoli
 
-| Ruolo   | GET /api/caselle-pec              | GET /allegati/firmati                   |
-|---------|-----------------------------------|-----------------------------------------|
-| `user`  | Solo le proprie caselle           | Solo i propri allegati firmati          |
-| `admin` | Tutte le caselle del tenant       | Tutti gli allegati firmati del tenant   |
+| Ruolo   | GET /api/caselle-pec        | GET /allegati/firmati                 |
+|---------|-----------------------------|---------------------------------------|
+| `user`  | Solo le proprie caselle     | Solo i propri allegati firmati        |
+| `admin` | Tutte le caselle del tenant | Tutti gli allegati firmati del tenant |
 
 ---
 
@@ -122,22 +148,28 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 2. Per ogni allegato da firmare:
    POST /api/firma/{allegatoId}/conferma  (firma-service)
         │  crea record allegato_firma (allegatoId, tenantId, userId, firmatoAt)
-        └→ pubblica AllegatoFirmatoEvent su topic "allegato-firmato"
+        ├→ [successo] pubblica FirmaRiuscitaEvent su topic "firma-riuscita-event"
+        └→ [errore]   pubblica FirmaFallitaEvent  su topic "firma-fallita-event"
 
-3. pec-service riceve AllegatoFirmatoEvent
+3a. pec-service riceve FirmaRiuscitaEvent
         │  valida tenantId + userId
         │  aggiorna allegato.firmato = true
         └→ invia a mock conservazione (log)
 
+3b. pec-service riceve FirmaFallitaEvent
+        │  valida tenantId + userId
+        └→ se allegato.firmato=true, riporta firmato=false (rollback)
+
 4. GET /api/caselle-pec  (pec-service)
-        └→ stato casella: IN_ATTESA_FIRMA o CONSERVATA (calcolato dagli allegati)
+        └→ ritorna lista caselle con messaggi e per ogni allegato: { id, filename, letto, firmato }
 ```
 
 ### Kafka topics
 
-| Topic             | Produttore    | Consumatore | Consumer Group      |
-|-------------------|---------------|-------------|---------------------|
-| `allegato-firmato`| firma-service | pec-service | `pec-conservazione` |
+| Topic                  | Produttore    | Consumatore | Consumer Group | Evento          |
+|------------------------|---------------|-------------|----------------|-----------------|
+| `firma-riuscita-event` | firma-service | pec-service | `pec-eventi`   | Firma riuscita  |
+| `firma-fallita-event`  | firma-service | pec-service | `pec-eventi`   | Firma fallita   |
 
 ---
 
@@ -145,17 +177,17 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
-| Tabella            | Servizio      | Descrizione                                                         |
-|--------------------|---------------|---------------------------------------------------------------------|
-| `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)              |
-| `allegato`         | pec-service   | Allegati estratti dai messaggi (tenant_id, user_id, firmato)        |
+| Tabella            | Servizio      | Descrizione                                                            |
+|--------------------|---------------|------------------------------------------------------------------------|
+| `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)                 |
+| `allegato`         | pec-service   | Allegati estratti dai messaggi (tenant_id, user_id, firmato)           |
 | `allegato_firmato` | firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at) |
 
 > Eliminando una casella vengono eliminati automaticamente anche tutti i suoi allegati (cascade).
 
 ---
 
-## Connessione a GUI di pgAdmin
+## Connessione a pgAdmin
 
 1. Vai su http://localhost:5050
 2. Login: `giuliano@email.it` / `admin`
@@ -165,7 +197,7 @@ Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
 ---
 
-## Fermare app
+## Fermare tutto
 
 ```bash
 docker compose down -v
