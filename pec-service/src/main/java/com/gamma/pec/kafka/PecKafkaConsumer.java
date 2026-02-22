@@ -2,7 +2,8 @@ package com.gamma.pec.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gamma.pec.dto.AllegatoFirmatoEvent;
+import com.gamma.pec.dto.FirmaFallitaEvent;
+import com.gamma.pec.dto.FirmaRiuscitaEvent;
 import com.gamma.pec.service.CasellaPecService;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -20,22 +21,37 @@ public class PecKafkaConsumer {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "allegato-firmato", groupId = "pec-eventi")
-    public void handleAllegatoFirmato(String payload) {
-        AllegatoFirmatoEvent event = convertiEvento(payload);
+    @KafkaListener(topics = "firma-riuscita-event", groupId = "pec-eventi")
+    public void handleFirmaRiuscita(String payload) {
+        FirmaRiuscitaEvent event = convertiEventoRiuscita(payload);
         if (event == null) return;
-        log.info("Allegato firmato ricevuto: {} tenant {} user {}", event.getAllegatoId(), event.getTenantId(), event.getUserId());
+        log.info("Firma riuscita ricevuta: allegato {} tenant {} user {}", event.getAllegatoId(), event.getTenantId(), event.getUserId());
         casellaPecService.gestisciAllegatoFirmato(event.getAllegatoId(), event.getTenantId(), event.getUserId());
     }
 
-    private @Nullable AllegatoFirmatoEvent convertiEvento(String payload) {
-        AllegatoFirmatoEvent event;
+    @KafkaListener(topics = "firma-fallita-event", groupId = "pec-eventi")
+    public void handleFirmaFallita(String payload) {
+        FirmaFallitaEvent event = convertiEventoFallita(payload);
+        if (event == null) return;
+        log.warn("Firma fallita ricevuta: allegato {} tenant {} user {}", event.getAllegatoId(), event.getTenantId(), event.getUserId());
+        casellaPecService.gestisciAllegatoFirmaFallita(event.getAllegatoId(), event.getTenantId(), event.getUserId());
+    }
+
+    private @Nullable FirmaRiuscitaEvent convertiEventoRiuscita(String payload) {
         try {
-            event = objectMapper.readValue(payload, AllegatoFirmatoEvent.class);
+            return objectMapper.readValue(payload, FirmaRiuscitaEvent.class);
         } catch (JsonProcessingException e) {
-            log.error("Messaggio Kafka non valido, ignorato: {}", payload, e);
+            log.error("Messaggio firma-riuscita-event non valido, ignorato: {}", payload, e);
             return null;
         }
-        return event;
+    }
+
+    private @Nullable FirmaFallitaEvent convertiEventoFallita(String payload) {
+        try {
+            return objectMapper.readValue(payload, FirmaFallitaEvent.class);
+        } catch (JsonProcessingException e) {
+            log.error("Messaggio firma-fallita-event non valido, ignorato: {}", payload, e);
+            return null;
+        }
     }
 }

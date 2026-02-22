@@ -1,32 +1,23 @@
 package com.gamma.pec.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gamma.pec.dto.AllegatoFirmatoEvent;
-import com.gamma.pec.mock.MockConservazioneApi;
-import com.gamma.pec.model.Allegato;
-import com.gamma.pec.repository.AllegatoRepository;
+import com.gamma.pec.service.CasellaPecService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PecKafkaConsumerTest {
 
     @Mock
-    private AllegatoRepository allegatoRepo;
-
-    @Mock
-    private MockConservazioneApi mockConservazioneApi;
+    private CasellaPecService casellaPecService;
 
     @Spy
     private ObjectMapper objectMapper;
@@ -35,46 +26,43 @@ class PecKafkaConsumerTest {
     private PecKafkaConsumer pecKafkaConsumer;
 
     @Test
-    void handleAllegatoFirmato_marcaFirmatoEConserva() throws Exception {
+    void handleFirmaRiuscita_delegaAlServizio() {
         UUID allegatoId = UUID.randomUUID();
-        Allegato allegato = Allegato.builder()
-                .id(allegatoId)
-                .tenantId("tenant-1")
-                .userId("user-1")
-                .filename("fattura.pdf")
-                .firmato(false)
-                .build();
+        // costruiamo il JSON senza il campo timestamp per evitare dipendenze dal modulo JSR310 nei test
+        String payload = """
+                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","riuscitoAt":null}
+                """.formatted(allegatoId);
 
-        when(allegatoRepo.findById(allegatoId)).thenReturn(Optional.of(allegato));
-        when(allegatoRepo.save(any())).thenReturn(allegato);
+        pecKafkaConsumer.handleFirmaRiuscita(payload);
 
-        String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, "tenant-1", "user-1"));
-        pecKafkaConsumer.handleAllegatoFirmato(payload);
-
-        assertThat(allegato.isFirmato()).isTrue();
-        verify(allegatoRepo).save(allegato);
-        verify(mockConservazioneApi).conservaAllegato("tenant-1", "fattura.pdf");
+        verify(casellaPecService).gestisciAllegatoFirmato(allegatoId, "tenant-1", "user-1");
+        verify(casellaPecService, never()).gestisciAllegatoFirmaFallita(any(), any(), any());
     }
 
     @Test
-    void handleAllegatoFirmato_ignoraSeTenantsNonCorrispondono() throws Exception {
+    void handleFirmaFallita_delegaAlServizio() {
         UUID allegatoId = UUID.randomUUID();
-        Allegato allegato = Allegato.builder()
-                .id(allegatoId)
-                .tenantId("tenant-1")
-                .userId("user-1")
-                .filename("fattura.pdf")
-                .firmato(false)
-                .build();
+        String payload = """
+                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","fallitoAt":null}
+                """.formatted(allegatoId);
 
-        when(allegatoRepo.findById(allegatoId)).thenReturn(Optional.of(allegato));
+        pecKafkaConsumer.handleFirmaFallita(payload);
 
-        // evento con tenant diverso
-        String payload = objectMapper.writeValueAsString(new AllegatoFirmatoEvent(allegatoId, "tenant-ALTRO", "user-1"));
-        pecKafkaConsumer.handleAllegatoFirmato(payload);
+        verify(casellaPecService).gestisciAllegatoFirmaFallita(allegatoId, "tenant-1", "user-1");
+        verify(casellaPecService, never()).gestisciAllegatoFirmato(any(), any(), any());
+    }
 
-        assertThat(allegato.isFirmato()).isFalse();
-        verify(allegatoRepo, never()).save(any());
-        verify(mockConservazioneApi, never()).conservaAllegato(any(), any());
+    @Test
+    void handleFirmaRiuscita_payloadNonValido_nonChiamaNulla() {
+        pecKafkaConsumer.handleFirmaRiuscita("non-json");
+
+        verify(casellaPecService, never()).gestisciAllegatoFirmato(any(), any(), any());
+    }
+
+    @Test
+    void handleFirmaFallita_payloadNonValido_nonChiamaNulla() {
+        pecKafkaConsumer.handleFirmaFallita("non-json");
+
+        verify(casellaPecService, never()).gestisciAllegatoFirmaFallita(any(), any(), any());
     }
 }

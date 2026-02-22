@@ -143,6 +143,20 @@ public class CasellaPecService {
         });
     }
 
+    @Transactional
+    public void gestisciAllegatoFirmaFallita(UUID allegatoId, String tenantId, String userId) {
+        allegatoRepo.findById(allegatoId).ifPresent(allegato -> {
+            if (!allegato.getTenantId().equals(tenantId) || !allegato.getUserId().equals(userId)) {
+                log.warn("Allegato {} non appartiene a tenant {} user {}, ignorato", allegatoId, tenantId, userId);
+                return;
+            }
+            if (allegato.isFirmato())
+                allegato.setFirmato(false);
+            allegatoRepo.save(allegato);
+            log.warn("Rollback allegato {} marcato come firma fallita", allegato.getFilename());
+        });
+    }
+
     public List<Allegato> allegatiFirmati(boolean isAdmin) {
         String tenantId = TenantContext.getTenantId();
         String userId = TenantContext.get().getUserId();

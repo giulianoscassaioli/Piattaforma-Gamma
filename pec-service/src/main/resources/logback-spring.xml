@@ -1,31 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="pec-service"/>
-    <springProperty scope="context" name="LOKI_URL" source="loki.url" defaultValue="http://localhost:3100"/>
-
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [tenant=%X{tenantId:-N/A} user=%X{userId:-N/A}] - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-        <http>
-            <url>${LOKI_URL}/loki/api/v1/push</url>
-        </http>
-        <format>
-            <label>
-                <pattern>app=${APP_NAME},level=%level,tenantId=%mdc{tenantId:-N/A}</pattern>
-            </label>
-            <message class="com.github.loki4j.logback.JsonLayout"/>
-            <sortByTime>true</sortByTime>
-        </format>
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:5044</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"pec-service","env":"local"}</customFields>
+            <includeMdcKeyName>tenantId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+        </encoder>
+        <reconnectionDelay>5 seconds</reconnectionDelay>
     </appender>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOKI"/>
+        <appender-ref ref="LOGSTASH"/>
     </root>
 
 </configuration>

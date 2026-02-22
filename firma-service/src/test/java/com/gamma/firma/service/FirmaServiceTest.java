@@ -1,5 +1,6 @@
 package com.gamma.firma.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gamma.firma.model.AllegatoFirmato;
 import com.gamma.firma.repository.AllegatoFirmaRepository;
 import com.gamma.firma.tenant.TenantContext;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -29,6 +31,9 @@ class FirmaServiceTest {
 
     @Mock
     private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Spy
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private FirmaService firmaService;
@@ -65,7 +70,7 @@ class FirmaServiceTest {
         assertThat(risultato.getAllegatoId()).isEqualTo(allegatoId);
         assertThat(risultato.getTenantId()).isEqualTo("tenant-1");
         verify(allegatoFirmaRepo).save(any());
-        verify(kafkaTemplate).send(eq("allegato-firmato"), eq("tenant-1"), any());
+        verify(kafkaTemplate).send(eq("firma-riuscita-event"), eq("tenant-1"), any());
     }
 
     @Test
