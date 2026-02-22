@@ -150,10 +150,11 @@ public class CasellaPecService {
                 log.warn("Allegato {} non appartiene a tenant {} user {}, ignorato", allegatoId, tenantId, userId);
                 return;
             }
-            if (allegato.isFirmato())
+            if (allegato.isFirmato()) {
                 allegato.setFirmato(false);
-            allegatoRepo.save(allegato);
-            log.warn("Rollback allegato {} marcato come firma fallita", allegato.getFilename());
+                allegatoRepo.save(allegato);
+                log.warn("Rollback allegato {} marcato come firma fallita", allegato.getFilename());
+            }
         });
     }
 
