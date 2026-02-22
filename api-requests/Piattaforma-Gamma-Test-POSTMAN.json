@@ -86,7 +86,7 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec?indirizzo=mario1&oggetto=Gennaio",
+          "raw": "http://localhost:8081/api/caselle-pec?indirizzo=giulian&oggetto=Gennaio",
           "protocol": "http",
           "host": [
             "localhost:8081"
@@ -98,7 +98,7 @@
           "query": [
             {
               "key": "indirizzo",
-              "value": "mario1"
+              "value": "giulian"
             },
             {
               "key": "oggetto",
@@ -159,7 +159,7 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8082/api/firma/f5ad1fa6-0f81-4cb2-acc7-bf73a6d2dd26/conferma",
+          "raw": "http://localhost:8082/api/firma/5de97c6c-1db3-4089-a87d-0b1d8e335ee0/conferma",
           "protocol": "http",
           "host": [
             "localhost:8082"
@@ -167,7 +167,7 @@
           "path": [
             "api",
             "firma",
-            "f5ad1fa6-0f81-4cb2-acc7-bf73a6d2dd26",
+            "5de97c6c-1db3-4089-a87d-0b1d8e335ee0",
             "conferma"
           ],
           "query": [],
@@ -314,7 +314,7 @@
     {
       "name": "Leggi Allegati",
       "request": {
-        "method": "POST",
+        "method": "GET",
         "header": [
           {
             "key": "Content-Type",
@@ -328,7 +328,7 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec/3fcf3e35-d949-456e-9109-5afd6a11fb49/leggi-allegati",
+          "raw": "http://localhost:8081/api/caselle-pec/allegati/5de97c6c-1db3-4089-a87d-0b1d8e335ee0/leggi-allegato",
           "protocol": "http",
           "host": [
             "localhost:8081"
@@ -336,20 +336,54 @@
           "path": [
             "api",
             "caselle-pec",
-            "3fcf3e35-d949-456e-9109-5afd6a11fb49",
-            "leggi-allegati"
+            "allegati",
+            "5de97c6c-1db3-4089-a87d-0b1d8e335ee0",
+            "leggi-allegato"
           ],
           "query": [],
           "variable": []
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"mailboxes\": [\n    \"mario1@pec.it\"\n  ]\n}",
+          "raw": "",
           "options": {
             "raw": {
               "language": "json"
             }
           }
+        }
+      }
+    },
+    {
+      "name": "Leggi Messaggi",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "disabled": false,
+            "type": "default"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "",
+        "url": {
+          "raw": "http://localhost:8081/api/caselle-pec/7504154f-32b8-48bb-9eaf-83f4424cd4eb/leggi-messaggi",
+          "protocol": "http",
+          "host": [
+            "localhost:8081"
+          ],
+          "path": [
+            "api",
+            "caselle-pec",
+            "7504154f-32b8-48bb-9eaf-83f4424cd4eb",
+            "leggi-messaggi"
+          ],
+          "query": [],
+          "variable": []
         }
       }
     }

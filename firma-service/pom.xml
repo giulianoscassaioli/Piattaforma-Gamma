@@ -12,7 +12,7 @@
 
     <artifactId>firma-service</artifactId>
     <name>Gamma Firma Service</name>
-    <description>Firma documenti — porta 8082</description>
+    <description>Firma documenti</description>
 
     <dependencies>
 

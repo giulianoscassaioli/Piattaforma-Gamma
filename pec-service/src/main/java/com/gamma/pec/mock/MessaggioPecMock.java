@@ -9,7 +9,7 @@ import java.util.List;
 @Builder
 public class MessaggioPecMock {
     private String id;
-    private String subject;
-    private String sender;
+    private String oggetto;
+    private String mittente;
     private List<AllegatoMock> allegati;
 }

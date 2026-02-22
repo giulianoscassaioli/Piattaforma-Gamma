@@ -8,8 +8,6 @@ import java.util.UUID;
 
 public interface AllegatoRepository extends JpaRepository<Allegato, UUID> {
 
-    List<Allegato> findByCasellaPecId(UUID casellaPecId);
-
     List<Allegato> findByTenantIdAndFirmato(String tenantId, boolean firmato);
 
     List<Allegato> findByTenantIdAndUserIdAndFirmato(String tenantId, String userId, boolean firmato);

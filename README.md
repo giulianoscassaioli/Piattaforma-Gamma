@@ -112,13 +112,14 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 ### pec-service — `http://localhost:8081`
 
-| Metodo | Path                                   | Descrizione                                                     |
-|--------|----------------------------------------|-----------------------------------------------------------------|
-| GET    | `/api/caselle-pec`                     | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant) |
-| POST   | `/api/caselle-pec`                     | Registra una casella PEC                                                       |
-| DELETE | `/api/caselle-pec/{id}`                | Elimina casella (cancella anche i suoi allegati)                               |
-| POST   | `/api/caselle-pec/{id}/leggi-allegati` | Importa allegati dai messaggi mock → ritorna `[{id, filename}]`                |
-| GET    | `/api/caselle-pec/allegati/firmati`    | Allegati firmati (user: propri, admin: tutto il tenant)                        |
+| Metodo | Path                                                              | Descrizione                                                                    |
+|--------|-------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| GET    | `/api/caselle-pec`                                                | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant)  |
+| POST   | `/api/caselle-pec`                                                | Registra una casella PEC                                                        |
+| DELETE | `/api/caselle-pec/{id}`                                           | Elimina casella (cascade su messaggi e allegati)                               |
+| GET    | `/api/caselle-pec/{id}/leggi-messaggi`                            | Simula arrivo messaggi mock → salva MessaggioPec in DB → ritorna `[{id, messageId, oggetto, mittente}]` |
+| GET    | `/api/caselle-pec/allegati/{allegatoId}/leggi-allegato`                 | Ritorna un allegato e lo segna come letto → ritorna `{id, filename}`              |
+| GET    | `/api/caselle-pec/allegati/firmati`                               | Allegati firmati (user: propri, admin: tutto il tenant)                        |
 
 ### firma-service — `http://localhost:8082`
 
@@ -140,28 +141,36 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 ## Flusso completo
 
 ```
-1. POST /api/caselle-pec/{id}/leggi-allegati   (pec-service)
-        │  legge messaggi mock dalla casella PEC
-        │  salva allegati nel DB (firmato=false)
-        └→ ritorna: [{ id, filename }, ...]
+1. POST /api/caselle-pec                                (pec-service)
+        └→ crea casella PEC con indirizzo
 
-2. Per ogni allegato da firmare:
-   POST /api/firma/{allegatoId}/conferma  (firma-service)
-        │  crea record allegato_firma (allegatoId, tenantId, userId, firmatoAt)
+2. GET /api/caselle-pec/{id}/leggi-messaggi             (pec-service)
+        │  chiama MockPecApi → ritorna messaggi hardcodati
+        │  per ogni messaggio: crea MessaggioPec in DB se non esiste
+        └→ ritorna: [{ id (UUID), messageId, oggetto, mittente }, ...]
+
+3. GET /api/caselle-pec/allegati/{allegatoId}/leggi-allegato  (pec-service)
+        │  usa l'UUID dell'allegato visibile in GET /api/caselle-pec
+        │  segna l'allegato come letto (letto=true)
+        └→ ritorna: { id (UUID), filename }
+
+4. Per ogni allegato da firmare:
+   POST /api/firma/{allegatoId}/conferma               (firma-service)
+        │  crea record allegato_firmato
         ├→ [successo] pubblica FirmaRiuscitaEvent su topic "firma-riuscita-event"
         └→ [errore]   pubblica FirmaFallitaEvent  su topic "firma-fallita-event"
 
-3a. pec-service riceve FirmaRiuscitaEvent
+5a. pec-service riceve FirmaRiuscitaEvent
         │  valida tenantId + userId
         │  aggiorna allegato.firmato = true
-        └→ invia a mock conservazione (log)
+        └→ invia a mock conservazione api (solo log per poc)
 
-3b. pec-service riceve FirmaFallitaEvent
+5b. pec-service riceve FirmaFallitaEvent
         │  valida tenantId + userId
         └→ se allegato.firmato=true, riporta firmato=false (rollback)
 
-4. GET /api/caselle-pec  (pec-service)
-        └→ ritorna lista caselle con messaggi e per ogni allegato: { id, filename, letto, firmato }
+6. GET /api/caselle-pec                                 (pec-service)
+        └→ ritorna lista caselle con messaggi e allegati dal DB (user: proprie, admin: tutto tenant)
 ```
 
 ### Kafka topics
@@ -177,13 +186,15 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 
-| Tabella            | Servizio      | Descrizione                                                            |
-|--------------------|---------------|------------------------------------------------------------------------|
-| `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)                 |
-| `allegato`         | pec-service   | Allegati estratti dai messaggi (tenant_id, user_id, firmato)           |
-| `allegato_firmato` | firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at) |
+| Tabella            | Servizio      | Descrizione                                                                 |
+|--------------------|---------------|-----------------------------------------------------------------------------|
+| `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)                      |
+| `messaggio_pec`    | pec-service   | Messaggi importati dalla casella (message_id, oggetto, mittente)            |
+| `allegato`         | pec-service   | Allegati del messaggio (filename, firmato, letto)                           |
+| `allegato_firmato` | firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at)      |
 
-> Eliminando una casella vengono eliminati automaticamente anche tutti i suoi allegati (cascade).
+**Relazioni:** `casella_pec` → `messaggio_pec` → `allegato` (cascade ALL, orphanRemoval).
+Eliminando una casella vengono eliminati automaticamente i suoi messaggi e i relativi allegati.
 
 ---
 

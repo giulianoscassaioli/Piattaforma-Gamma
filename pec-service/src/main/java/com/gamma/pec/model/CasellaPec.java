@@ -25,5 +25,5 @@ public class CasellaPec {
     private String indirizzo;
 
     @OneToMany(mappedBy = "casellaPec", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Allegato> allegati;
+    private List<MessaggioPec> messaggi;
 }

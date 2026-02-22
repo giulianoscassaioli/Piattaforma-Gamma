@@ -3,6 +3,7 @@ package com.gamma.pec.controller;
 import com.gamma.pec.dto.AllegatoDto;
 import com.gamma.pec.dto.CasellaPecRequest;
 import com.gamma.pec.dto.CasellaDto;
+import com.gamma.pec.model.Allegato;
 import com.gamma.pec.model.CasellaPec;
 import com.gamma.pec.service.CasellaPecService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +25,9 @@ public class CasellaPecController {
     @GetMapping
     @PreAuthorize("hasAnyRole('user', 'admin')")
     public List<CasellaDto> listaCaselle(@RequestParam(required = false) String indirizzo,
-                                                 @RequestParam(required = false) String mittente,
-                                                 @RequestParam(required = false) String oggetto,
-                                                 Authentication authentication) {
+                                         @RequestParam(required = false) String mittente,
+                                         @RequestParam(required = false) String oggetto,
+                                         Authentication authentication) {
         return casellaPecService.listaCaselle(indirizzo, mittente, oggetto, isAdmin(authentication));
     }
 
@@ -44,15 +45,22 @@ public class CasellaPecController {
         casellaPecService.eliminaCasella(id);
     }
 
-    @PostMapping("/{id}/leggi-allegati")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    // Simula anche l'arrivo di nuovi messagg
+    @GetMapping("/{id}/leggi-messaggi")
     @PreAuthorize("hasAnyRole('user', 'admin')")
-    public List<AllegatoDto> leggiMessaggi(@PathVariable UUID id,
-                                           @RequestParam(required = false) String mittente,
-                                           @RequestParam(required = false) String oggetto) {
-        return casellaPecService.leggiMessaggiImportaAllegati(id, mittente, oggetto).stream()
-                .map(a -> new AllegatoDto(a.getId(), a.getFilename()))
+    public List<MessaggioImportatoDto> leggiMessaggi(@PathVariable UUID id,
+                                                     @RequestParam(required = false) String mittente,
+                                                     @RequestParam(required = false) String oggetto) {
+        return casellaPecService.leggiMessaggi(id, mittente, oggetto).stream()
+                .map(m -> new MessaggioImportatoDto(m.getId(), m.getMessageId(), m.getOggetto(), m.getMittente()))
                 .toList();
+    }
+
+    @GetMapping("/allegati/{allegatoId}/leggi-allegato")
+    @PreAuthorize("hasAnyRole('user', 'admin')")
+    public AllegatoDto leggiAllegato(@PathVariable UUID allegatoId) {
+        Allegato allegato = casellaPecService.leggiAllegato(allegatoId);
+        return new AllegatoDto(allegato.getId(), allegato.getFilename());
     }
 
     @GetMapping("/allegati/firmati")
@@ -67,4 +75,6 @@ public class CasellaPecController {
         return authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_admin"));
     }
+
+    public record MessaggioImportatoDto(UUID id, String messageId, String oggetto, String mittente) {}
 }

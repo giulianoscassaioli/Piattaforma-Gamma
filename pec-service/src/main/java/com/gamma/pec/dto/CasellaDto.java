@@ -8,6 +8,6 @@ public record CasellaDto(
         String indirizzo,
         List<MessaggioDto> messaggi
 ) {
-    public record MessaggioDto(String id, String oggetto, String mittente, List<AllegatoDto> allegati) {}
+    public record MessaggioDto(UUID id, String oggetto, String mittente, List<AllegatoDto> allegati) {}
     public record AllegatoDto(UUID id, String filename, boolean letto, boolean firmato) {}
 }
