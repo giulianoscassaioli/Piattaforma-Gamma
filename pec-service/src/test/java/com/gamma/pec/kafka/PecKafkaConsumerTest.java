@@ -28,9 +28,8 @@ class PecKafkaConsumerTest {
     @Test
     void handleFirmaRiuscita_delegaAlServizio() {
         UUID allegatoId = UUID.randomUUID();
-        // costruiamo il JSON senza il campo timestamp per evitare dipendenze dal modulo JSR310 nei test
         String payload = """
-                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","riuscitoAt":null}
+                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","riuscitoAt":"2026-02-22T09:00:00"}
                 """.formatted(allegatoId);
 
         pecKafkaConsumer.handleFirmaRiuscita(payload);
@@ -43,7 +42,7 @@ class PecKafkaConsumerTest {
     void handleFirmaFallita_delegaAlServizio() {
         UUID allegatoId = UUID.randomUUID();
         String payload = """
-                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","fallitoAt":null}
+                {"allegatoId":"%s","tenantId":"tenant-1","userId":"user-1","fallitoAt":"2026-02-22T09:00:00"}
                 """.formatted(allegatoId);
 
         pecKafkaConsumer.handleFirmaFallita(payload);
