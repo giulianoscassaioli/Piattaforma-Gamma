@@ -52,7 +52,7 @@ class FirmaServiceTest {
     }
 
     @Test
-    void conferma_creaAllegatoFirmaEPubblicaEvento() {
+    void confermaTest() {
         UUID allegatoId = UUID.randomUUID();
         AllegatoFirmato firma = AllegatoFirmato.builder()
                 .id(UUID.randomUUID())
@@ -74,7 +74,7 @@ class FirmaServiceTest {
     }
 
     @Test
-    void conferma_lanceEccezioneSeAllegatoGiaFirmato() {
+    void confermaTest_2() {
         UUID allegatoId = UUID.randomUUID();
         when(allegatoFirmaRepo.findByAllegatoId(allegatoId))
                 .thenReturn(Optional.of(AllegatoFirmato.builder().build()));

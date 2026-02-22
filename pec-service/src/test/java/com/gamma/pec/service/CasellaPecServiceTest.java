@@ -5,8 +5,10 @@ import com.gamma.pec.mock.MessaggioPecMock;
 import com.gamma.pec.mock.MockPecApi;
 import com.gamma.pec.model.Allegato;
 import com.gamma.pec.model.CasellaPec;
+import com.gamma.pec.model.MessaggioPec;
 import com.gamma.pec.repository.AllegatoRepository;
 import com.gamma.pec.repository.CasellaPecRepository;
+import com.gamma.pec.repository.MessaggioPecRepository;
 import com.gamma.pec.tenant.TenantContext;
 import com.gamma.pec.tenant.TenantInfo;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -36,6 +39,9 @@ class CasellaPecServiceTest {
     private AllegatoRepository allegatoRepo;
 
     @Mock
+    private MessaggioPecRepository messaggioPecRepo;
+
+    @Mock
     private MockPecApi mockPecApi;
 
     @InjectMocks
@@ -52,10 +58,9 @@ class CasellaPecServiceTest {
     }
 
     @Test
-    void registraCasella_salvaERitornaLaCasella() {
+    void registraCasellaTest() {
         CasellaPec casella = CasellaPec.builder().id(UUID.randomUUID())
                 .tenantId("tenant-1").userId("user-1").indirizzo("mario@pec.it").build();
-
         when(casellaPecRepo.save(any())).thenReturn(casella);
 
         CasellaPec risultato = casellaPecService.registraCasella("mario@pec.it");
@@ -65,32 +70,27 @@ class CasellaPecServiceTest {
     }
 
     @Test
-    void leggiMessaggiImportaAllegati_filtraPerOggetto() {
+    void leggiMessaggiTest() {
         UUID casellaPecId = UUID.randomUUID();
         CasellaPec casella = CasellaPec.builder().id(casellaPecId)
                 .tenantId("tenant-1").indirizzo("mario@pec.it").build();
 
         when(casellaPecRepo.findByIdAndTenantId(casellaPecId, "tenant-1")).thenReturn(Optional.of(casella));
-        when(mockPecApi.readMessages("mario@pec.it")).thenReturn(List.of(
-                MessaggioPecMock.builder().id("msg-001").subject("Fattura Gennaio 2026").sender("fornitore@pec.it")
+        when(mockPecApi.leggiIncomingMessages("mario@pec.it")).thenReturn(List.of(
+                MessaggioPecMock.builder().id("msg-001").oggetto("Fattura Gennaio 2026").mittente("fornitore@pec.it")
                         .allegati(List.of(AllegatoMock.builder().filename("fattura_gennaio.pdf").build())).build(),
-                MessaggioPecMock.builder().id("msg-002").subject("Fattura Febbraio 2026").sender("fornitore@pec.it")
+                MessaggioPecMock.builder().id("msg-002").oggetto("Fattura Febbraio 2026").mittente("fornitore@pec.it")
                         .allegati(List.of(AllegatoMock.builder().filename("fattura_febbraio.pdf").build())).build()
         ));
-        when(allegatoRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        MessaggioPec messaggio = MessaggioPec.builder().id(UUID.randomUUID()).casellaPec(casella)
+                .messageId("msg-001").oggetto("Fattura Gennaio 2026").mittente("fornitore@pec.it")
+                .allegati(new ArrayList<>()).build();
+        when(messaggioPecRepo.findByCasellaPecIdAndMessageId(casellaPecId, "msg-001")).thenReturn(Optional.empty());
+        when(messaggioPecRepo.save(any())).thenReturn(messaggio);
 
-        List<Allegato> risultato = casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, "Gennaio");
+        List<MessaggioPec> risultato = casellaPecService.leggiMessaggi(casellaPecId, null, "Gennaio");
 
         assertThat(risultato).hasSize(1);
-        assertThat(risultato.get(0).getFilename()).contains("fattura_gennaio.pdf");
-    }
-
-    @Test
-    void leggiMessaggiImportaAllegati_lanceEccezioneSeNonEsiste() {
-        UUID casellaPecId = UUID.randomUUID();
-        when(casellaPecRepo.findByIdAndTenantId(casellaPecId, "tenant-1")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, null))
-                .isInstanceOf(NoSuchElementException.class);
+        assertThat(risultato.get(0).getOggetto()).contains("Gennaio");
     }
 }

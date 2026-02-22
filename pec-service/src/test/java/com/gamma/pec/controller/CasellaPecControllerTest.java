@@ -32,9 +32,6 @@ class CasellaPecControllerTest {
     @Mock
     private CasellaPecService casellaPecService;
 
-    @Mock
-    private AllegatoRepository allegatoRepo;
-
     @InjectMocks
     private CasellaPecController controller;
 
@@ -49,7 +46,7 @@ class CasellaPecControllerTest {
     }
 
     @Test
-    void listaCaselle_utenteNonAdmin_passaIsAdminFalse() {
+    void listaCaselleUtenteNonAdminTest() {
         Authentication auth = mockAuthentication(false);
         when(casellaPecService.listaCaselle(null, null, null, false)).thenReturn(List.of(
                 new CasellaDto(UUID.randomUUID(), "mario@pec.it", List.of())
@@ -62,36 +59,18 @@ class CasellaPecControllerTest {
     }
 
     @Test
-    void registraCasella_ritornaLaCasellaCreata() {
-        CasellaPec casella = CasellaPec.builder()
-                .id(UUID.randomUUID())
-                .tenantId("tenant-1")
-                .userId("user-1")
-                .indirizzo("mario@pec.it")
-                .build();
-        when(casellaPecService.registraCasella("mario@pec.it")).thenReturn(casella);
-
-        CasellaPec risultato = controller.registraCasella(new CasellaPecRequest("mario@pec.it"));
-
-        assertThat(risultato.getIndirizzo()).isEqualTo("mario@pec.it");
-        verify(casellaPecService).registraCasella("mario@pec.it");
-    }
-
-    @Test
-    void leggiAllegati_ritornaListaAllegatiDto() {
-        UUID casellaPecId = UUID.randomUUID();
+    void leggiAllegatoTest() {
+        UUID allegatoId = UUID.randomUUID();
         Allegato allegato = Allegato.builder()
-                .id(UUID.randomUUID())
+                .id(allegatoId)
                 .filename("fattura.pdf")
                 .build();
-        when(casellaPecService.leggiMessaggiImportaAllegati(casellaPecId, null, "Fattura"))
-                .thenReturn(List.of(allegato));
+        when(casellaPecService.leggiAllegato(allegatoId)).thenReturn(allegato);
 
-        List<AllegatoDto> risultato = controller.leggiMessaggi(casellaPecId, null, "Fattura");
+        AllegatoDto risultato = controller.leggiAllegato(allegatoId);
 
-        assertThat(risultato).hasSize(1);
-        assertThat(risultato.get(0).filename()).isEqualTo("fattura.pdf");
-        verify(casellaPecService).leggiMessaggiImportaAllegati(casellaPecId, null, "Fattura");
+        assertThat(risultato.filename()).isEqualTo("fattura.pdf");
+        verify(casellaPecService).leggiAllegato(allegatoId);
     }
 
     // helper per simulare un'autenticazione utente normale

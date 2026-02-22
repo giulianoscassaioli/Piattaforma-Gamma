@@ -15,8 +15,8 @@ public class Allegato {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casella_pec_id", nullable = false)
-    private CasellaPec casellaPec;
+    @JoinColumn(name = "messaggio_pec_id", nullable = false)
+    private MessaggioPec messaggio;
 
     @Column(name = "tenant_id", nullable = false, length = 100)
     private String tenantId;
