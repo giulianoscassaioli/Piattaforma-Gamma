@@ -68,15 +68,6 @@ Eliminando una casella vengono eliminati automaticamente a cascata tutti i suoi 
 
 ---
 
-## Idempotenza import
-
-- `leggi-messaggi`: se il messaggio mock è già in DB (stessa `message_id` + `casella_pec_id`) non crea duplicati.
-- `leggi-allegati`: se l'allegato è già in DB (stesso `filename` del messaggio) non crea duplicati.
-
-Le due operazioni sono separate per permettere all'utente di scegliere quale messaggio importare.
-
----
-
 ## Stack
 
 - Java 25, Spring Boot 4.0.1
@@ -110,7 +101,7 @@ Per tutte le altre operazioni (registra, elimina, leggi-messaggi, leggi-allegati
 
 Il POC non si connette a sistemi esterni reali:
 
-- **MockPecApi** — restituisce sempre gli stessi 2 messaggi hardcodati con IDs fissi (`msg-001`, `msg-002`). In produzione si userebbero le API del provider PEC.
+- **MockPecApi** — restituisce sempre gli stessi 2 messaggi hardcodati. In produzione si userebbero le API del provider PEC.
 - **MockConservazioneApi** — fa solo un log. In produzione upload S3 + chiamata API di conservazione reale.
 
 ---
