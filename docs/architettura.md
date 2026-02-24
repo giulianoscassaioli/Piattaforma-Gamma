@@ -34,8 +34,8 @@ utente chiama POST /firma/{id}/conferma  (firma-service)
 
 pec-service consumer riceve FirmaRiuscitaEvent
   → valida tenantId + userId
-  → aggiorna allegato.firmato = true
-  → chiama mock conservazione
+  → aggiorna allegato.firmato = true, allegato.conservato = true
+  → carica il file su S3 (bucket: gamma-allegati, key: filename)
 
 pec-service consumer riceve FirmaFallitaEvent
   → valida tenantId + userId
@@ -61,7 +61,7 @@ casella_pec
                 id (UUID)
                 tenant_id, user_id
                 filename
-                firmato, letto
+                firmato, conservato, letto
 ```
 
 Eliminando una casella vengono eliminati automaticamente a cascata tutti i suoi messaggi e i relativi allegati.
@@ -74,6 +74,7 @@ Eliminando una casella vengono eliminati automaticamente a cascata tutti i suoi 
 - PostgreSQL 16
 - Redpanda (Kafka-compatible per sviluppo locale)
 - Keycloak 26 per autenticazione OAuth2/JWT
+- MinIO — object storage S3-compatible per gli allegati firmati
 - ELK Stack: Elasticsearch 8.12 + Logstash 8.12 + Kibana 8.12
 
 Per la security ho usato Spring OAuth2 Resource Server che valida i JWT di Keycloak tramite il JWK endpoint, senza scrivere logica di validazione a mano.
@@ -98,10 +99,5 @@ Per tutte le altre operazioni (registra, elimina, leggi-messaggi, leggi-allegati
 ---
 
 ## Mock
-
-Il POC non si connette a sistemi esterni reali:
-
-- **MockPecApi** — restituisce sempre gli stessi 2 messaggi hardcodati. In produzione si userebbero le API del provider PEC.
-- **MockConservazioneApi** — fa solo un log. In produzione upload S3 + chiamata API di conservazione reale.
-
+- **MockPecApi** — Simula ricezione messaggi.
 ---

@@ -35,6 +35,7 @@ docker compose up -d
 | Redpanda         | `localhost:9092`      | Broker Kafka-compatible                 |
 | Redpanda Console | http://localhost:8083 | UI topic e consumer group               |
 | Keycloak         | http://localhost:8080 | Identity Provider (realm: `gamma`)      |
+| MinIO            | http://localhost:9001 | Object storage — login: `admin`/`admin` |
 | Elasticsearch    | http://localhost:9200 | Storage e ricerca log                   |
 | Logstash         | `localhost:5044`      | Ingestion log via TCP (JSON)            |
 | Kibana           | http://localhost:5601 | Dashboard log                           |
@@ -114,12 +115,12 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 | Metodo | Path                                                              | Descrizione                                                                    |
 |--------|-------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| GET    | `/api/caselle-pec`                                                | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant)  |
+| GET    | `/api/caselle-pec?pagina=0&dimensione=20`                         | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant)  |
 | POST   | `/api/caselle-pec`                                                | Registra una casella PEC                                                        |
 | DELETE | `/api/caselle-pec/{id}`                                           | Elimina casella (cascade su messaggi e allegati)                               |
 | GET    | `/api/caselle-pec/{id}/leggi-messaggi`                            | Simula arrivo messaggi mock → salva MessaggioPec in DB → ritorna `[{id, messageId, oggetto, mittente}]` |
 | GET    | `/api/caselle-pec/allegati/{allegatoId}/leggi-allegato`                 | Ritorna un allegato e lo segna come letto → ritorna `{id, filename}`              |
-| GET    | `/api/caselle-pec/allegati/firmati`                               | Allegati firmati (user: propri, admin: tutto il tenant)                        |
+| GET    | `/api/caselle-pec/allegati/firmati?pagina=0&dimensione=20`        | Allegati firmati (user: propri, admin: tutto il tenant)                        |
 
 ### firma-service — `http://localhost:8082`
 
@@ -162,8 +163,8 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 
 5a. pec-service riceve FirmaRiuscitaEvent
         │  valida tenantId + userId
-        │  aggiorna allegato.firmato = true
-        └→ invia a mock conservazione api (solo log per poc)
+        │  aggiorna allegato.firmato = true, allegato.conservato = true
+        └→ carica il file su MinIO (bucket: gamma-allegati)
 
 5b. pec-service riceve FirmaFallitaEvent
         │  valida tenantId + userId
@@ -190,7 +191,7 @@ Hibernate crea le tabelle automaticamente al primo avvio (`ddl-auto: update`).
 |--------------------|---------------|-----------------------------------------------------------------------------|
 | `casella_pec`      | pec-service   | Caselle PEC registrate (tenant_id, user_id, indirizzo)                      |
 | `messaggio_pec`    | pec-service   | Messaggi importati dalla casella (message_id, oggetto, mittente)            |
-| `allegato`         | pec-service   | Allegati del messaggio (filename, firmato, letto)                           |
+| `allegato`         | pec-service   | Allegati del messaggio (filename, firmato, conservato, letto)               |
 | `allegato_firmato` | firma-service | Storico firme effettuate (allegato_id, tenant_id, user_id, firmato_at)      |
 
 **Relazioni:** `casella_pec` → `messaggio_pec` → `allegato` (cascade ALL, orphanRemoval).
