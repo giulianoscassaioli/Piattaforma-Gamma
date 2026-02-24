@@ -24,6 +24,12 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/gamma
 
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:gamma-allegati}
+
 logging:
   level:
     com.gamma: DEBUG

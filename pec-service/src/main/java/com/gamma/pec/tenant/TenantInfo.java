@@ -8,5 +8,4 @@ import lombok.Data;
 public class TenantInfo {
     private String tenantId;
     private String userId;
-    private String userEmail;
 }
