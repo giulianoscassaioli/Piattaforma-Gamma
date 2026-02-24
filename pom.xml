@@ -16,11 +16,12 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gamma Platform - Parent POM</name>
-    <description>POC Piattaforma Gamma — Multi-module parent</description>
+    <description>Piattaforma Gamma</description>
 
     <modules>
         <module>pec-service</module>
         <module>firma-service</module>
+        <module>gateway-service</module>
     </modules>
 
     <properties>
@@ -28,6 +29,7 @@
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
         <lombok.version>1.18.42</lombok.version>
         <aws.sdk.version>2.25.16</aws.sdk.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -41,6 +43,13 @@
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
                 <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -66,5 +75,6 @@
             </plugins>
         </pluginManagement>
     </build>
+
 
 </project>

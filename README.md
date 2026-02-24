@@ -42,17 +42,24 @@ docker compose up -d
 
 ### 3. Avvia i microservizi
 
-In due terminali separati:
+In tre terminali separati:
 
 ```bash
-# Terminale 1 — pec-service (porta 8081)
+# Terminale 1 — gateway-service (porta 8090) — punto di ingresso
+cd gateway-service && mvn spring-boot:run
+```
+
+```bash
+# Terminale 2 — pec-service (porta 8081)
 cd pec-service && mvn spring-boot:run
 ```
 
 ```bash
-# Terminale 2 — firma-service (porta 8082)
+# Terminale 3 — firma-service (porta 8082)
 cd firma-service && mvn spring-boot:run
 ```
+
+> **Tutte le chiamate API passano per il gateway sulla porta 8090.**
 
 ---
 
@@ -96,6 +103,8 @@ Gli utenti sono preconfigurati nel realm export (`keycloak/realm-export.json`) e
 
 ## Ottenere un token JWT
 
+Il token va richiesto **direttamente a Keycloak** (porta 8080), poi usato nelle chiamate al gateway (porta 8090).
+
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/realms/gamma/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -109,20 +118,20 @@ TOKEN=$(curl -s -X POST http://localhost:8080/realms/gamma/protocol/openid-conne
 
 ## API
 
-Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
+Tutte le chiamate passano per il **gateway `http://localhost:8090`** e richiedono l'header `Authorization: Bearer <token>`.
 
-### pec-service — `http://localhost:8081`
+### pec-service — instradato da `/api/caselle-pec/**`
 
-| Metodo | Path                                                              | Descrizione                                                                    |
-|--------|-------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| GET    | `/api/caselle-pec?pagina=0&dimensione=20`                         | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant)  |
-| POST   | `/api/caselle-pec`                                                | Registra una casella PEC                                                        |
-| DELETE | `/api/caselle-pec/{id}`                                           | Elimina casella (cascade su messaggi e allegati)                               |
-| GET    | `/api/caselle-pec/{id}/leggi-messaggi`                            | Simula arrivo messaggi mock → salva MessaggioPec in DB → ritorna `[{id, messageId, oggetto, mittente}]` |
-| GET    | `/api/caselle-pec/allegati/{allegatoId}/leggi-allegato`                 | Ritorna un allegato e lo segna come letto → ritorna `{id, filename}`              |
-| GET    | `/api/caselle-pec/allegati/firmati?pagina=0&dimensione=20`        | Allegati firmati (user: propri, admin: tutto il tenant)                        |
+| Metodo | Path                                               | Descrizione                                                                    |
+|--------|----------------------------------------------------|--------------------------------------------------------------------------------|
+| GET    | `/api/caselle-pec?pagina=0&dimensione=20`          | Lista caselle con messaggi e allegati (user: proprie, admin: tutto il tenant)  |
+| POST   | `/api/caselle-pec`                                 | Registra una casella PEC                                                       |
+| DELETE | `/api/caselle-pec/{id}`                            | Elimina casella (cascade su messaggi e allegati)                               |
+| GET    | `/api/caselle-pec/{id}/leggi-messaggi`             | Simula arrivo messaggi mock → salva MessaggioPec in DB                        |
+| GET    | `/api/caselle-pec/allegati/{allegatoId}/leggi-allegato` | Ritorna un allegato e lo segna come letto                                 |
+| GET    | `/api/caselle-pec/allegati/firmati?pagina=0&dimensione=20` | Allegati firmati (user: propri, admin: tutto il tenant)              |
 
-### firma-service — `http://localhost:8082`
+### firma-service — instradato da `/api/firma/**`
 
 | Metodo | Path                               | Descrizione                |
 |--------|------------------------------------|----------------------------|
@@ -142,21 +151,21 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
 ## Flusso completo
 
 ```
-1. POST /api/caselle-pec                                (pec-service)
+1. POST /api/caselle-pec                                      (gateway → pec-service)
         └→ crea casella PEC con indirizzo
 
-2. GET /api/caselle-pec/{id}/leggi-messaggi             (pec-service)
+2. GET /api/caselle-pec/{id}/leggi-messaggi                   (gateway → pec-service)
         │  chiama MockPecApi → ritorna messaggi hardcodati
         │  per ogni messaggio: crea MessaggioPec in DB se non esiste
         └→ ritorna: [{ id (UUID), messageId, oggetto, mittente }, ...]
 
-3. GET /api/caselle-pec/allegati/{allegatoId}/leggi-allegato  (pec-service)
+3. GET /api/caselle-pec/allegati/{allegatoId}/leggi-allegato  (gateway → pec-service)
         │  usa l'UUID dell'allegato visibile in GET /api/caselle-pec
         │  segna l'allegato come letto (letto=true)
         └→ ritorna: { id (UUID), filename }
 
 4. Per ogni allegato da firmare:
-   POST /api/firma/{allegatoId}/conferma               (firma-service)
+   POST /api/firma/{allegatoId}/conferma                      (gateway → firma-service)
         │  crea record allegato_firmato
         ├→ [successo] pubblica FirmaRiuscitaEvent su topic "firma-riuscita-event"
         └→ [errore]   pubblica FirmaFallitaEvent  su topic "firma-fallita-event"
@@ -170,7 +179,7 @@ Tutte le chiamate richiedono l'header `Authorization: Bearer <token>`.
         │  valida tenantId + userId
         └→ se allegato.firmato=true, riporta firmato=false (rollback)
 
-6. GET /api/caselle-pec                                 (pec-service)
+6. GET /api/caselle-pec                                       (gateway → pec-service)
         └→ ritorna lista caselle con messaggi e allegati dal DB (user: proprie, admin: tutto tenant)
 ```
 

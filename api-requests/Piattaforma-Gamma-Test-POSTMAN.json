@@ -22,10 +22,10 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec/allegati/firmati",
+          "raw": "http://localhost:8090/api/caselle-pec/allegati/firmati",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
@@ -55,10 +55,10 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec",
+          "raw": "http://localhost:8090/api/caselle-pec",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
@@ -86,10 +86,10 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec?indirizzo=giulian&oggetto=Gennaio",
+          "raw": "http://localhost:8090/api/caselle-pec?indirizzo=giulian&oggetto=Gennaio",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
@@ -126,10 +126,10 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec",
+          "raw": "http://localhost:8090/api/caselle-pec",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
@@ -159,15 +159,15 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8082/api/firma/905ef907-0296-444d-9a06-56b50c831d04/conferma",
+          "raw": "http://localhost:8090/api/firma/f68cd02f-3dd1-4bc7-a860-5534b5a58e7a/conferma",
           "protocol": "http",
           "host": [
-            "localhost:8082"
+            "localhost:8090"
           ],
           "path": [
             "api",
             "firma",
-            "905ef907-0296-444d-9a06-56b50c831d04",
+            "f68cd02f-3dd1-4bc7-a860-5534b5a58e7a",
             "conferma"
           ],
           "query": [],
@@ -328,16 +328,16 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec/allegati/905ef907-0296-444d-9a06-56b50c831d04/leggi-allegato",
+          "raw": "http://localhost:8090/api/caselle-pec/allegati/f68cd02f-3dd1-4bc7-a860-5534b5a58e7a/leggi-allegato",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
             "caselle-pec",
             "allegati",
-            "905ef907-0296-444d-9a06-56b50c831d04",
+            "f68cd02f-3dd1-4bc7-a860-5534b5a58e7a",
             "leggi-allegato"
           ],
           "query": [],
@@ -371,15 +371,15 @@
         },
         "description": "",
         "url": {
-          "raw": "http://localhost:8081/api/caselle-pec/22d41cff-b66e-4a66-bcc7-f7df60bdf851/leggi-messaggi",
+          "raw": "http://localhost:8090/api/caselle-pec/595ed85d-c8df-432c-9256-3d2a12b33b80/leggi-messaggi",
           "protocol": "http",
           "host": [
-            "localhost:8081"
+            "localhost:8090"
           ],
           "path": [
             "api",
             "caselle-pec",
-            "22d41cff-b66e-4a66-bcc7-f7df60bdf851",
+            "595ed85d-c8df-432c-9256-3d2a12b33b80",
             "leggi-messaggi"
           ],
           "query": [],

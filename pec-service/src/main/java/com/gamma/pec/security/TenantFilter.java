@@ -7,18 +7,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
-@Order(1)
 @Slf4j
 public class TenantFilter extends OncePerRequestFilter {
 
@@ -27,18 +26,35 @@ public class TenantFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth instanceof JwtAuthenticationToken jwtToken) {
-                Jwt jwt = jwtToken.getToken();
-                TenantInfo info = TenantInfo.builder()
-                        .tenantId(jwt.getClaimAsString("tenant_id"))
-                        .userId(jwt.getSubject())
-                        .build();
-                TenantContext.set(info);
+            String tenantId = request.getHeader("X-Tenant-Id");
+            String userId = request.getHeader("X-User-Id");
+            String rolesHeader = request.getHeader("X-Roles");
+            if (tenantId != null && !tenantId.isBlank() && userId != null && !userId.isBlank()) {
+                settaContestoDalTenant(tenantId, userId, rolesHeader);
             }
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private static void settaContestoDalTenant(String tenantId, String userId, String rolesHeader) {
+        TenantInfo info = TenantInfo.builder()
+                .tenantId(tenantId)
+                .userId(userId)
+                .build();
+        TenantContext.set(info);
+
+        List<SimpleGrantedAuthority> authorities = List.of();
+        if (rolesHeader != null && !rolesHeader.isBlank()) {
+            authorities = Arrays.stream(rolesHeader.split(","))
+                    .map(String::trim)
+                    .filter(r -> !r.isBlank())
+                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                    .toList();
+        }
+        var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        log.debug("TenantContext impostato: tenantId={}, userId={}", tenantId, userId);
     }
 }

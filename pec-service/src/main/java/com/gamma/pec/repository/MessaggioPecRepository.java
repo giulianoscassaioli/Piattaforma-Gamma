@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface MessaggioPecRepository extends JpaRepository<MessaggioPec, UUID> {
 
     Optional<MessaggioPec> findByCasellaPecIdAndMessageId(UUID casellaPecId, String messageId);
+
+    //get all paginata
 }

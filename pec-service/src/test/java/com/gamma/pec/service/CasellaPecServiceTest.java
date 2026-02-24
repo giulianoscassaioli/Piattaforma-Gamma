@@ -11,6 +11,7 @@ import com.gamma.pec.repository.CasellaPecRepository;
 import com.gamma.pec.repository.MessaggioPecRepository;
 import com.gamma.pec.tenant.TenantContext;
 import com.gamma.pec.tenant.TenantInfo;
+import software.amazon.awssdk.services.s3.S3Client;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,8 +45,11 @@ class CasellaPecServiceTest {
     @Mock
     private MockPecApi mockPecApi;
 
+    @Mock
+    private S3Client s3Client;
+
     @InjectMocks
-    private CasellaPecService casellaPecService;
+    private CasellaPecServiceImpl casellaPecService;
 
     @BeforeEach
     void setUp() {
