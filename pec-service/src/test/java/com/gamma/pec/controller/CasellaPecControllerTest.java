@@ -19,6 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -48,14 +51,14 @@ class CasellaPecControllerTest {
     @Test
     void listaCaselleUtenteNonAdminTest() {
         Authentication auth = mockAuthentication(false);
-        when(casellaPecService.listaCaselle(null, null, null, false)).thenReturn(List.of(
-                new CasellaDto(UUID.randomUUID(), "mario@pec.it", List.of())
-        ));
+        when(casellaPecService.listaCaselle(null, null, null, false, 0, 20)).thenReturn(
+                new PageImpl<>(List.of(new CasellaDto(UUID.randomUUID(), "mario@pec.it", List.of())))
+        );
 
-        List<CasellaDto> risultato = controller.listaCaselle(null, null, null, auth);
+        Page<CasellaDto> risultato = controller.listaCaselle(null, null, null, 0, 20, auth);
 
-        assertThat(risultato).hasSize(1);
-        verify(casellaPecService).listaCaselle(null, null, null, false);
+        assertThat(risultato.getContent()).hasSize(1);
+        verify(casellaPecService).listaCaselle(null, null, null, false, 0, 20);
     }
 
     @Test

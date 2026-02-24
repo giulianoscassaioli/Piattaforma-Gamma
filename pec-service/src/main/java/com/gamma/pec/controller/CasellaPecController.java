@@ -7,6 +7,7 @@ import com.gamma.pec.model.Allegato;
 import com.gamma.pec.model.CasellaPec;
 import com.gamma.pec.service.CasellaPecService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -24,11 +25,13 @@ public class CasellaPecController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('user', 'admin')")
-    public List<CasellaDto> listaCaselle(@RequestParam(required = false) String indirizzo,
+    public Page<CasellaDto> listaCaselle(@RequestParam(required = false) String indirizzo,
                                          @RequestParam(required = false) String mittente,
                                          @RequestParam(required = false) String oggetto,
+                                         @RequestParam(defaultValue = "0")  int pagina,
+                                         @RequestParam(defaultValue = "20") int dimensione,
                                          Authentication authentication) {
-        return casellaPecService.listaCaselle(indirizzo, mittente, oggetto, isAdmin(authentication));
+        return casellaPecService.listaCaselle(indirizzo, mittente, oggetto, isAdmin(authentication), pagina, dimensione);
     }
 
     @PostMapping
@@ -65,10 +68,11 @@ public class CasellaPecController {
 
     @GetMapping("/allegati/firmati")
     @PreAuthorize("hasAnyRole('user', 'admin')")
-    public List<AllegatoDto> allegatiFirmati(Authentication authentication) {
-        return casellaPecService.allegatiFirmati(isAdmin(authentication)).stream()
-                .map(a -> new AllegatoDto(a.getId(), a.getFilename()))
-                .toList();
+    public Page<AllegatoDto> allegatiFirmati(@RequestParam(defaultValue = "0")  int pagina,
+                                              @RequestParam(defaultValue = "20") int dimensione,
+                                              Authentication authentication) {
+        return casellaPecService.allegatiFirmati(isAdmin(authentication), pagina, dimensione)
+                .map(a -> new AllegatoDto(a.getId(), a.getFilename()));
     }
 
     private boolean isAdmin(Authentication authentication) {

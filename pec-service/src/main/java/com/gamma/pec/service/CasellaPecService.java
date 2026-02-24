@@ -15,6 +15,9 @@ import com.gamma.pec.tenant.TenantContext;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -106,16 +109,15 @@ public class CasellaPecService {
         log.info("Casella PEC {} eliminata per tenant {}", casella.getIndirizzo(), TenantContext.getTenantId());
     }
 
-    public List<CasellaDto> listaCaselle(String filtroIndirizzo, String mittente, String oggetto, boolean isAdmin) {
+    public Page<CasellaDto> listaCaselle(String filtroIndirizzo, String mittente, String oggetto,
+                                          boolean isAdmin, int pagina, int dimensione) {
         String userId = TenantContext.get().getUserId();
         String tenantId = TenantContext.getTenantId();
-        List<CasellaPec> caselle;
-        if (isAdmin) {
-            caselle = leggiCaselleDiTuttoIlTenant(filtroIndirizzo, tenantId);
-        } else {
-            caselle = leggiCaselleUtente(filtroIndirizzo, userId, tenantId);
-        }
-        return caselle.stream().map(c -> toDto(c, mittente, oggetto)).toList();
+        Pageable pageable = PageRequest.of(pagina, dimensione);
+        Page<CasellaPec> caselle = isAdmin
+                ? leggiCaselleDiTuttoIlTenant(filtroIndirizzo, tenantId, pageable)
+                : leggiCaselleUtente(filtroIndirizzo, userId, tenantId, pageable);
+        return caselle.map(c -> toDto(c, mittente, oggetto));
     }
 
     @Transactional
@@ -184,23 +186,24 @@ public class CasellaPecService {
         return new CasellaDto(casella.getId(), casella.getIndirizzo(), messaggiDto);
     }
 
-    public List<Allegato> allegatiFirmati(boolean isAdmin) {
+    public Page<Allegato> allegatiFirmati(boolean isAdmin, int pagina, int dimensione) {
         String tenantId = TenantContext.getTenantId();
         String userId = TenantContext.get().getUserId();
+        Pageable pageable = PageRequest.of(pagina, dimensione);
         return isAdmin
-                ? allegatoRepo.findByTenantIdAndFirmato(tenantId, true)
-                : allegatoRepo.findByTenantIdAndUserIdAndFirmato(tenantId, userId, true);
+                ? allegatoRepo.findByTenantIdAndFirmato(tenantId, true, pageable)
+                : allegatoRepo.findByTenantIdAndUserIdAndFirmato(tenantId, userId, true, pageable);
     }
 
-    private List<CasellaPec> leggiCaselleUtente(String filtroIndirizzo, String userId, String tenantId) {
+    private Page<CasellaPec> leggiCaselleUtente(String filtroIndirizzo, String userId, String tenantId, Pageable pageable) {
         return (filtroIndirizzo != null && !filtroIndirizzo.isBlank())
-                ? casellaPecRepo.findByUserIdAndTenantIdAndIndirizzoContainingIgnoreCase(userId, tenantId, filtroIndirizzo)
-                : casellaPecRepo.findByUserIdAndTenantId(userId, tenantId);
+                ? casellaPecRepo.findByUserIdAndTenantIdAndIndirizzoContainingIgnoreCase(userId, tenantId, filtroIndirizzo, pageable)
+                : casellaPecRepo.findByUserIdAndTenantId(userId, tenantId, pageable);
     }
 
-    private List<CasellaPec> leggiCaselleDiTuttoIlTenant(String filtroIndirizzo, String tenantId) {
+    private Page<CasellaPec> leggiCaselleDiTuttoIlTenant(String filtroIndirizzo, String tenantId, Pageable pageable) {
         return (filtroIndirizzo != null && !filtroIndirizzo.isBlank())
-                ? casellaPecRepo.findByTenantIdAndIndirizzoContainingIgnoreCase(tenantId, filtroIndirizzo)
-                : casellaPecRepo.findByTenantId(tenantId);
+                ? casellaPecRepo.findByTenantIdAndIndirizzoContainingIgnoreCase(tenantId, filtroIndirizzo, pageable)
+                : casellaPecRepo.findByTenantId(tenantId, pageable);
     }
 }
