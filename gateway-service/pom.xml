@@ -40,6 +40,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Logstash encoder per ELK -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
