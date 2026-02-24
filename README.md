@@ -117,7 +117,7 @@ TOKEN=$(curl -s -X POST http://localhost:8080/realms/gamma/protocol/openid-conne
 ---
 
 ## API
-(Allego collezio chiamate per Bruno o Postman nella cartella [api-requests](api-requests/) )
+(Allego collezione chiamate per Bruno o Postman nella cartella [api-requests](api-requests/) )
 
 Tutte le chiamate passano per il **gateway `http://localhost:8090`** e richiedono l'header `Authorization: Bearer <token>`.
 
