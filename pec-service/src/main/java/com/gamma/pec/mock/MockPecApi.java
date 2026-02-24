@@ -12,7 +12,6 @@ public class MockPecApi {
     public List<MessaggioPecMock> leggiIncomingMessages(String mailbox) {
         log.info("Mock servizio Lettura messaggi da {}", mailbox);
 
-        // mocks
         return List.of(
                 MessaggioPecMock.builder()
                         .id("msg-001")

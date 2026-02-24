@@ -33,7 +33,6 @@ public class TenantFilter extends OncePerRequestFilter {
                 TenantInfo info = TenantInfo.builder()
                         .tenantId(jwt.getClaimAsString("tenant_id"))
                         .userId(jwt.getSubject())
-                        .userEmail(jwt.getClaimAsString("email"))
                         .build();
                 TenantContext.set(info);
             }

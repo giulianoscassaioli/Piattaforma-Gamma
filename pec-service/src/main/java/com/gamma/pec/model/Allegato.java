@@ -31,5 +31,8 @@ public class Allegato {
     private boolean firmato;
 
     @Column(nullable = false)
+    private boolean conservato;
+
+    @Column(nullable = false)
     private boolean letto;
 }
