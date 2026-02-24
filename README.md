@@ -28,17 +28,17 @@ mvn clean install -DskipTests
 docker compose up -d
 ```
 
-| Servizio         | URL                   | Note                                    |
-|------------------|-----------------------|-----------------------------------------|
-| PostgreSQL       | `localhost:5432`      | DB: `gamma`, User: `admin`              |
-| pgAdmin          | http://localhost:5050 | Login: `giuliano@email.it` / `admin`    |
-| Redpanda         | `localhost:9092`      | Broker Kafka-compatible                 |
-| Redpanda Console | http://localhost:8083 | UI topic e consumer group               |
-| Keycloak         | http://localhost:8080 | Identity Provider (realm: `gamma`)      |
-| MinIO            | http://localhost:9001 | Object storage — login: `admin`/`admin` |
-| Elasticsearch    | http://localhost:9200 | Storage e ricerca log                   |
-| Logstash         | `localhost:5044`      | Ingestion log via TCP (JSON)            |
-| Kibana           | http://localhost:5601 | Dashboard log                           |
+| Servizio         | URL                   | Note                                              |
+|------------------|-----------------------|---------------------------------------------------|
+| PostgreSQL       | `localhost:5432`      | DB: `gamma`, User: `admin`                        |
+| pgAdmin          | http://localhost:5050 | Login: `giuliano@email.it` / `admin`              |
+| Redpanda         | `localhost:9092`      | Broker Kafka-compatible                           |
+| Redpanda Console | http://localhost:8083 | UI topic e consumer group                         |
+| Keycloak         | http://localhost:8080 | Identity Provider (realm: `gamma`)                |
+| MinIO            | http://localhost:9001 | Object storage — login: `minioadmin`/`minioadmin` |
+| Elasticsearch    | http://localhost:9200 | Storage e ricerca log                             |
+| Logstash         | `localhost:5044`      | Ingestion log via TCP (JSON)                      |
+| Kibana           | http://localhost:5601 | Dashboard log                                     |
 
 ### 3. Avvia i microservizi
 
